@@ -993,3 +993,13 @@ evidence links switch to the ticket and Cash tabs; no console errors.
 database files and no `.env`; the archive lists both databases and no `.env`.
 
 ---
+
+### 26 — The repository URL in output/github_url.txt
+
+> when complete can you also out the repo URL in output/github_url.txt
+
+**Result:** `output/github_url.txt` holds the one line
+`https://github.com/AMR6958-coder/campus-customs-hw5`. Committed and pushed; the archive rebuilt
+so it carries the file too.
+
+---

@@ -204,3 +204,4 @@ Cash tabs of `output/desk_tickets.html`, `output/audit_trail.json`, and section 
 - `output/resolved_tickets.json` and `output/resolved_board.html`: the full run's record per ticket
   (status, outcome, what each agent did, approvals, payments) and the board at each resolution.
 - `output/audit_trail.json`: every agent run, model step, human decision and reset, appended.
+- `output/github_url.txt`: the repository's URL.

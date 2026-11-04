@@ -14,18 +14,21 @@ Three pieces talk to each other:
 
 **Data.** `data.zip` (provided with the assignment) unzips to `data/campus_customs.db`, the untouched
 original. The agents work on a copy, `data/campus_customs_new.db`; resetting means copying the
-original over it. Neither file is committed.
+original over it. Both files are committed under `data/`, the working copy as the full run left
+it, so a clone can run, or reset and run again, without the course's `data.zip`.
 
 **Repository:** https://github.com/AMR6958-coder/campus-customs-hw5 (public). **Submission
-archive:** `campus-customs-hw5-submission.zip`, the same tree plus `data/campus_customs_new.db` as
-the full run left it. Not in either: `data.zip` and the original database (the course's files),
-`backend/.env` (the gateway key), `.venv/`, `frontend/node_modules/`, `frontend/dist/`.
+archive:** `campus-customs-hw5-submission.zip`, the same tree. Not in either: `data.zip`,
+`backend/.env` (the gateway key; only `.env.example` is included), `.venv/`,
+`frontend/node_modules/`, `frontend/dist/`.
 
 ## Quick start (clone and run)
 
 1. `git clone https://github.com/AMR6958-coder/campus-customs-hw5.git` and `cd` into it.
-2. Put the course's `data.zip` in the folder, unzip it so that `data/campus_customs.db` exists, and
-   make the working copy: `copy data\campus_customs.db data\campus_customs_new.db`.
+2. The database files are already in `data/`: `campus_customs.db` (the untouched original) and
+   `campus_customs_new.db` (the working copy, as the full run left it: three tickets resolved,
+   checking $152). To start clean, `.venv\Scripts\python -m mcp_server.reset` after step 3, or
+   press Reset shop on the dashboard.
 3. `py -3.14 -m venv .venv`, then install both requirement files into it (commands below; use the
    `uv` fallback if pip fails behind a proxy).
 4. `copy backend\.env.example backend\.env` and fill in `PORTKEY_API_KEY` (and `PORTKEY_BASE_URL`
@@ -57,7 +60,7 @@ system certificates:
 .venv\Scripts\uv pip install --system-certs --python .venv\Scripts\python.exe -r mcp_server\requirements.txt
 ```
 
-Then unzip `data.zip` here and make the working copy:
+The database files are in `data/`. If you want to rebuild the working copy from the original:
 
 ```
 copy data\campus_customs.db data\campus_customs_new.db

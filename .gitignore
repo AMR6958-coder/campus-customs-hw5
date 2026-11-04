@@ -4,8 +4,8 @@ backend/.env
 !.env.example
 !backend/.env.example
 
-# Instructor data and the working copy stay out of the repository
-data/*.db
+# The database files under data/ are committed: the untouched original and the working copy as
+# the full run left it. The course's data.zip and the submission archive are not.
 data.zip
 *.zip
 

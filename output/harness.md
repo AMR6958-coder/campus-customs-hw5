@@ -443,7 +443,7 @@ End state to verify after a full run: two rows in `payments`, cash $160, invoice
 | 7b | Expected outcomes per ticket, written before the run: `output/desk_tickets.html` (one tab per ticket with first call, delegations, tools, end state; Actual slots for after the runs; Cash and Reflection tabs reserved) | done 2026-11-03, section 9 |
 | 8 | Approval flow end to end through the API | done 2026-11-03, section 10 (`backend/main.py`, 14 routes; approve → pay → the Boss re-works the ticket in the background) |
 | 9 | Dashboard | done 2026-11-03, section 11 (`frontend/`, React 19 + Vite 8 + TypeScript; the design and why in `output/design.md`, screenshots in `output/screens/`) |
-| 10 | Full run from a reset; verify the end state in 3.6; operational check with screenshots; README; submission archive; public repository | run done 2026-11-03, section 12 (three tickets resolved from the dashboard, $3,400 → $152, `output/resolved_tickets.json`, `output/resolved_board.html`, the desk page's Actual and Cash tabs); archive and repository remain |
+| 10 | Full run from a reset; verify the end state in 3.6; operational check with screenshots; README; submission archive; public repository | done: the run 2026-11-03, section 12 (three tickets resolved from the dashboard, $3,400 → $152, `output/resolved_tickets.json`, `output/resolved_board.html`, the desk page's Actual, Cash and Reflection tabs); archive `campus-customs-hw5-submission.zip` and public repository https://github.com/AMR6958-coder/campus-customs-hw5 on 2026-11-04 (no `.env`; both database files under `data/` committed) |
 
 ### 3.8 Open items
 

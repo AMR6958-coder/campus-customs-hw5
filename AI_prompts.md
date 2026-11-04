@@ -956,3 +956,40 @@ evidence links switch to the ticket and Cash tabs; no console errors.
 **Left for the submission:** the archive and the public repository.
 
 ---
+
+### 25 — The submission archive and the public repository
+
+> Archive and repo
+
+> lets push this code to a public github repository so the graders can clone it.
+
+> as before, do not push the real .env to the github repo. but do include the database files
+> under data/
+
+**Result:**
+- **Checks first.** `gh` signed in as AMR6958-coder (the HW4 account), git identity set, and the
+  Portkey key value found nowhere in the tree except `backend/.env` (`.env.example` holds a
+  placeholder; `config.py` only reads the variable).
+- **README.** A "Quick start (clone and run)" for graders: clone, the database files already in
+  `data/`, the virtual environment and both requirement files, `backend/.env` from the example
+  with `PORTKEY_API_KEY`, three terminals (MCP server 8100, API 8000 from `backend/` with
+  `uvicorn main:app --reload --port 8000`, dashboard 5173 with `npm run dev`), then Reset shop and
+  Run the board; `python -m pytest` for the 47 tests. The repository URL and what is and is not
+  included.
+- **Archive.** `campus-customs-hw5-submission.zip` at the project root: 92 files, 848 KB; the
+  source, prompts, tests, outputs (harness, design, desk page, resolved tickets, resolved board,
+  audit trail, screenshots), `.mcp.json`, `.claude/launch.json`, both database files; not
+  `.venv/`, `frontend/node_modules/`, `frontend/dist/`, `backend/.env`, `data.zip`.
+- **Repository.** https://github.com/AMR6958-coder/campus-customs-hw5, public, branch `main`.
+  Commit 1: the whole tree per `.gitignore` (no `.env`, no databases, no archives); the staging
+  list was checked for `.env`, `.db`, `.zip`, `node_modules`, `.venv` and `dist` before the
+  commit. Commit 2, on the instruction above: `.gitignore` no longer excludes `data/*.db`, so
+  `data/campus_customs.db` (the untouched original) and `data/campus_customs_new.db` (the working
+  copy as the full run left it) are committed; `backend/.env` remains excluded and only
+  `.env.example` is in the repository. Verified on GitHub: `data/` lists both files; `backend/`
+  lists `.env.example` and no `.env`.
+
+**Verified:** `gh repo view` reports PUBLIC on `main`; the GitHub contents API shows the two
+database files and no `.env`; the archive lists both databases and no `.env`.
+
+---

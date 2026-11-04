@@ -1,0 +1,2508 @@
+{
+  "title": "Campus Customs MCP server: smoke test of all 26 tools through the Claude Code connector",
+  "run_at": "2026-11-03 14:59 (real time); the shop's own date is 2026-08-31",
+  "connector": "campus-customs, project .mcp.json, stdio (.venv/Scripts/python.exe -m mcp_server.server --stdio)",
+  "database": "data/campus_customs_new.db (the working copy; data/campus_customs.db is never opened)",
+  "how": "Each entry is one tool call made from inside the Claude Code session: the prompt that led to it, the tool, its arguments, and the output exactly as returned. The 15 read tools ran first on the untouched seed, then the 11 write tools in dependency order (the invoice must be paid before Bulldog Print Co accepts an order), then the changed tables were read again. db_check holds the SQL run afterwards against the working copy by output/check_mcp_smoke.py, the value expected from the output, the value the database gave, and whether they match. For reads taken before the writes, the SQL checks the columns the writes did not touch, or reconstructs the earlier value (for example the balance before payments).",
+  "summary": {
+    "checked_at": "2026-11-03T15:03:56-05:00",
+    "entries": 35,
+    "distinct_tools": 26,
+    "matched": 35,
+    "mismatched": 0
+  },
+  "entries": [
+    {
+      "step": 1,
+      "phase": "read, seed state",
+      "prompt": "What is today's date for the shop?",
+      "tool": "get_today",
+      "arguments": {},
+      "output": {
+        "date_today": "2026-08-31",
+        "notes": null
+      },
+      "db_check": {
+        "sql": "SELECT date_today, notes FROM desk",
+        "expect": [
+          [
+            "2026-08-31",
+            null
+          ]
+        ],
+        "db_value": [
+          [
+            "2026-08-31",
+            null
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 2,
+      "phase": "read, seed state",
+      "prompt": "Show me the whole ticket board.",
+      "tool": "list_tickets",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 101,
+            "type": "customer_order",
+            "requester": "Tauhid Zaman",
+            "subject": "Bulldog tee",
+            "sku": "CC-TEE-WHITE",
+            "size": "S",
+            "qty": 1,
+            "lease_id": null,
+            "invoice_id": 501,
+            "status": "open",
+            "notes": "Needs a tee in size S.",
+            "created_at": "2026-08-31T09:15:00-04:00",
+            "assigned_to": null,
+            "priority": null,
+            "resolution": null,
+            "updated_at": null
+          },
+          {
+            "id": 102,
+            "type": "rent_notice",
+            "requester": "Elm City Properties",
+            "subject": "Rent due",
+            "sku": null,
+            "size": null,
+            "qty": null,
+            "lease_id": 1,
+            "invoice_id": null,
+            "status": "open",
+            "notes": "Email: shop rent due in 2 days.",
+            "created_at": "2026-08-31T11:05:00-04:00",
+            "assigned_to": null,
+            "priority": null,
+            "resolution": null,
+            "updated_at": null
+          },
+          {
+            "id": 103,
+            "type": "price_override",
+            "requester": "Yale AI Club",
+            "subject": "Bulk hoodie discount",
+            "sku": "CC-HOOD-NAVY",
+            "size": "M",
+            "qty": 20,
+            "lease_id": null,
+            "invoice_id": null,
+            "status": "open",
+            "notes": "Student org wants 20 hoodies, size M, asking for a bulk discount.",
+            "created_at": "2026-08-31T16:55:00-04:00",
+            "assigned_to": null,
+            "priority": null,
+            "resolution": null,
+            "updated_at": null
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT id, type, requester, subject, sku, size, qty, lease_id, invoice_id, notes, created_at FROM tickets WHERE id <= 103 ORDER BY id",
+        "expect": [
+          [
+            101,
+            "customer_order",
+            "Tauhid Zaman",
+            "Bulldog tee",
+            "CC-TEE-WHITE",
+            "S",
+            1,
+            null,
+            501,
+            "Needs a tee in size S.",
+            "2026-08-31T09:15:00-04:00"
+          ],
+          [
+            102,
+            "rent_notice",
+            "Elm City Properties",
+            "Rent due",
+            null,
+            null,
+            null,
+            1,
+            null,
+            "Email: shop rent due in 2 days.",
+            "2026-08-31T11:05:00-04:00"
+          ],
+          [
+            103,
+            "price_override",
+            "Yale AI Club",
+            "Bulk hoodie discount",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            null,
+            null,
+            "Student org wants 20 hoodies, size M, asking for a bulk discount.",
+            "2026-08-31T16:55:00-04:00"
+          ]
+        ],
+        "db_value": [
+          [
+            101,
+            "customer_order",
+            "Tauhid Zaman",
+            "Bulldog tee",
+            "CC-TEE-WHITE",
+            "S",
+            1,
+            null,
+            501,
+            "Needs a tee in size S.",
+            "2026-08-31T09:15:00-04:00"
+          ],
+          [
+            102,
+            "rent_notice",
+            "Elm City Properties",
+            "Rent due",
+            null,
+            null,
+            null,
+            1,
+            null,
+            "Email: shop rent due in 2 days.",
+            "2026-08-31T11:05:00-04:00"
+          ],
+          [
+            103,
+            "price_override",
+            "Yale AI Club",
+            "Bulk hoodie discount",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            null,
+            null,
+            "Student org wants 20 hoodies, size M, asking for a bulk discount.",
+            "2026-08-31T16:55:00-04:00"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 3,
+      "phase": "read, seed state",
+      "prompt": "Open ticket 103 with everything it links to.",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": 103
+      },
+      "output": {
+        "id": 103,
+        "type": "price_override",
+        "requester": "Yale AI Club",
+        "subject": "Bulk hoodie discount",
+        "sku": "CC-HOOD-NAVY",
+        "size": "M",
+        "qty": 20,
+        "lease_id": null,
+        "invoice_id": null,
+        "status": "open",
+        "notes": "Student org wants 20 hoodies, size M, asking for a bulk discount.",
+        "created_at": "2026-08-31T16:55:00-04:00",
+        "assigned_to": null,
+        "priority": null,
+        "resolution": null,
+        "updated_at": null,
+        "shop_today": "2026-08-31",
+        "links": {
+          "invoice": null,
+          "lease": null,
+          "stock": [
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "S",
+              "qty": 4,
+              "location": "Aisle A",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "M",
+              "qty": 8,
+              "location": "Aisle A",
+              "requested_size": true
+            },
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "L",
+              "qty": 14,
+              "location": "Aisle A",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "XL",
+              "qty": 6,
+              "location": "Aisle A",
+              "requested_size": false
+            }
+          ],
+          "pricing": {
+            "sku": "CC-HOOD-NAVY",
+            "unit_cost": 22,
+            "list_price": 58
+          }
+        }
+      },
+      "db_check": {
+        "sql": "SELECT t.requester, t.sku, t.size, t.qty, i.size, i.qty, i.location, p.unit_cost, p.list_price FROM tickets t JOIN inventory i ON i.sku = t.sku JOIN pricing p ON p.sku = t.sku WHERE t.id = 103 ORDER BY i.rowid",
+        "expect": [
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "S",
+            4,
+            "Aisle A",
+            22,
+            58
+          ],
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "M",
+            8,
+            "Aisle A",
+            22,
+            58
+          ],
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "L",
+            14,
+            "Aisle A",
+            22,
+            58
+          ],
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "XL",
+            6,
+            "Aisle A",
+            22,
+            58
+          ]
+        ],
+        "db_value": [
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "S",
+            4,
+            "Aisle A",
+            22.0,
+            58.0
+          ],
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "M",
+            8,
+            "Aisle A",
+            22.0,
+            58.0
+          ],
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "L",
+            14,
+            "Aisle A",
+            22.0,
+            58.0
+          ],
+          [
+            "Yale AI Club",
+            "CC-HOOD-NAVY",
+            "M",
+            20,
+            "XL",
+            6,
+            "Aisle A",
+            22.0,
+            58.0
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 4,
+      "phase": "read, seed state",
+      "prompt": "Has anything happened on the board yet?",
+      "tool": "list_ticket_events",
+      "arguments": {},
+      "output": {
+        "result": []
+      },
+      "db_check": {
+        "sql": "SELECT COUNT(*) FROM ticket_events WHERE id < 1",
+        "expect": 0,
+        "note": "The first event written by this run has id 1, so the feed was empty before it.",
+        "db_value": 0,
+        "match": true
+      }
+    },
+    {
+      "step": 5,
+      "phase": "read, seed state",
+      "prompt": "How many navy hoodies in size M do we have, and what do they cost?",
+      "tool": "get_stock",
+      "arguments": {
+        "sku": "CC-HOOD-NAVY",
+        "size": "M"
+      },
+      "output": {
+        "sku": "CC-HOOD-NAVY",
+        "stock": [
+          {
+            "sku": "CC-HOOD-NAVY",
+            "name": "Basic Hoodie Big Yale",
+            "size": "M",
+            "qty": 8,
+            "location": "Aisle A"
+          }
+        ],
+        "pricing": {
+          "sku": "CC-HOOD-NAVY",
+          "unit_cost": 22,
+          "list_price": 58
+        }
+      },
+      "db_check": {
+        "sql": "SELECT i.name, i.qty, i.location, p.unit_cost, p.list_price FROM inventory i JOIN pricing p ON p.sku = i.sku WHERE i.sku = 'CC-HOOD-NAVY' AND i.size = 'M'",
+        "expect": [
+          [
+            "Basic Hoodie Big Yale",
+            8,
+            "Aisle A",
+            22,
+            58
+          ]
+        ],
+        "db_value": [
+          [
+            "Basic Hoodie Big Yale",
+            8,
+            "Aisle A",
+            22.0,
+            58.0
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 6,
+      "phase": "read, seed state",
+      "prompt": "List everything on the shelves with cost and price.",
+      "tool": "list_stock",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "sku": "CC-HOOD-NAVY",
+            "name": "Basic Hoodie Big Yale",
+            "size": "S",
+            "qty": 4,
+            "location": "Aisle A",
+            "unit_cost": 22,
+            "list_price": 58
+          },
+          {
+            "sku": "CC-HOOD-NAVY",
+            "name": "Basic Hoodie Big Yale",
+            "size": "M",
+            "qty": 8,
+            "location": "Aisle A",
+            "unit_cost": 22,
+            "list_price": 58
+          },
+          {
+            "sku": "CC-HOOD-NAVY",
+            "name": "Basic Hoodie Big Yale",
+            "size": "L",
+            "qty": 14,
+            "location": "Aisle A",
+            "unit_cost": 22,
+            "list_price": 58
+          },
+          {
+            "sku": "CC-HOOD-NAVY",
+            "name": "Basic Hoodie Big Yale",
+            "size": "XL",
+            "qty": 6,
+            "location": "Aisle A",
+            "unit_cost": 22,
+            "list_price": 58
+          },
+          {
+            "sku": "CC-TEE-WHITE",
+            "name": "Classic Bulldog Tee",
+            "size": "S",
+            "qty": 0,
+            "location": "Aisle B",
+            "unit_cost": 8,
+            "list_price": 28
+          },
+          {
+            "sku": "CC-TEE-WHITE",
+            "name": "Classic Bulldog Tee",
+            "size": "M",
+            "qty": 5,
+            "location": "Aisle B",
+            "unit_cost": 8,
+            "list_price": 28
+          },
+          {
+            "sku": "CC-TEE-WHITE",
+            "name": "Classic Bulldog Tee",
+            "size": "L",
+            "qty": 3,
+            "location": "Aisle B",
+            "unit_cost": 8,
+            "list_price": 28
+          },
+          {
+            "sku": "CC-TEE-WHITE",
+            "name": "Classic Bulldog Tee",
+            "size": "XL",
+            "qty": 2,
+            "location": "Aisle B",
+            "unit_cost": 8,
+            "list_price": 28
+          },
+          {
+            "sku": "CC-HAT-BLUE",
+            "name": "Yale Cap",
+            "size": "OS",
+            "qty": 40,
+            "location": "Aisle C",
+            "unit_cost": 6,
+            "list_price": 22
+          },
+          {
+            "sku": "CC-MUG-CREST",
+            "name": "Crest Mug",
+            "size": "OS",
+            "qty": 0,
+            "location": "Aisle D",
+            "unit_cost": 3.5,
+            "list_price": 14
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT i.sku, i.size, i.qty, p.unit_cost, p.list_price FROM inventory i JOIN pricing p ON p.sku = i.sku ORDER BY i.rowid",
+        "expect": [
+          [
+            "CC-HOOD-NAVY",
+            "S",
+            4,
+            22,
+            58
+          ],
+          [
+            "CC-HOOD-NAVY",
+            "M",
+            8,
+            22,
+            58
+          ],
+          [
+            "CC-HOOD-NAVY",
+            "L",
+            14,
+            22,
+            58
+          ],
+          [
+            "CC-HOOD-NAVY",
+            "XL",
+            6,
+            22,
+            58
+          ],
+          [
+            "CC-TEE-WHITE",
+            "S",
+            0,
+            8,
+            28
+          ],
+          [
+            "CC-TEE-WHITE",
+            "M",
+            5,
+            8,
+            28
+          ],
+          [
+            "CC-TEE-WHITE",
+            "L",
+            3,
+            8,
+            28
+          ],
+          [
+            "CC-TEE-WHITE",
+            "XL",
+            2,
+            8,
+            28
+          ],
+          [
+            "CC-HAT-BLUE",
+            "OS",
+            40,
+            6,
+            22
+          ],
+          [
+            "CC-MUG-CREST",
+            "OS",
+            0,
+            3.5,
+            14
+          ]
+        ],
+        "db_value": [
+          [
+            "CC-HOOD-NAVY",
+            "S",
+            4,
+            22.0,
+            58.0
+          ],
+          [
+            "CC-HOOD-NAVY",
+            "M",
+            8,
+            22.0,
+            58.0
+          ],
+          [
+            "CC-HOOD-NAVY",
+            "L",
+            14,
+            22.0,
+            58.0
+          ],
+          [
+            "CC-HOOD-NAVY",
+            "XL",
+            6,
+            22.0,
+            58.0
+          ],
+          [
+            "CC-TEE-WHITE",
+            "S",
+            0,
+            8.0,
+            28.0
+          ],
+          [
+            "CC-TEE-WHITE",
+            "M",
+            5,
+            8.0,
+            28.0
+          ],
+          [
+            "CC-TEE-WHITE",
+            "L",
+            3,
+            8.0,
+            28.0
+          ],
+          [
+            "CC-TEE-WHITE",
+            "XL",
+            2,
+            8.0,
+            28.0
+          ],
+          [
+            "CC-HAT-BLUE",
+            "OS",
+            40,
+            6.0,
+            22.0
+          ],
+          [
+            "CC-MUG-CREST",
+            "OS",
+            0,
+            3.5,
+            14.0
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 7,
+      "phase": "read, seed state",
+      "prompt": "What is the margin on the navy hoodie?",
+      "tool": "get_pricing",
+      "arguments": {
+        "sku": "CC-HOOD-NAVY"
+      },
+      "output": {
+        "sku": "CC-HOOD-NAVY",
+        "unit_cost": 22,
+        "list_price": 58,
+        "margin": 36,
+        "margin_pct": 62.1
+      },
+      "db_check": {
+        "sql": "SELECT unit_cost, list_price, list_price - unit_cost, ROUND(100.0 * (list_price - unit_cost) / list_price, 1) FROM pricing WHERE sku = 'CC-HOOD-NAVY'",
+        "expect": [
+          [
+            22,
+            58,
+            36,
+            62.1
+          ]
+        ],
+        "db_value": [
+          [
+            22.0,
+            58.0,
+            36.0,
+            62.1
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 8,
+      "phase": "read, seed state",
+      "prompt": "Which vendors can ship right now, and how fast?",
+      "tool": "list_vendors",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 1,
+            "name": "Bulldog Print Co",
+            "specialty": "apparel reprint",
+            "lead_days": 5,
+            "open_invoice_ids": [
+              501
+            ],
+            "open_invoice_total": 840,
+            "can_ship": false
+          },
+          {
+            "id": 2,
+            "name": "Elm City Gifts",
+            "specialty": "mugs and small goods",
+            "lead_days": 3,
+            "open_invoice_ids": [],
+            "open_invoice_total": 0,
+            "can_ship": true
+          },
+          {
+            "id": 3,
+            "name": "QuickShip CT",
+            "specialty": "local courier",
+            "lead_days": 1,
+            "open_invoice_ids": [],
+            "open_invoice_total": 0,
+            "can_ship": true
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT v.id, v.name, v.specialty, v.lead_days, (SELECT COUNT(*) FROM invoices i WHERE i.vendor_id = v.id AND (i.status = 'open' OR i.id IN (SELECT ref_id FROM payments WHERE kind = 'invoice'))) FROM vendors v ORDER BY v.id",
+        "expect": [
+          [
+            1,
+            "Bulldog Print Co",
+            "apparel reprint",
+            5,
+            1
+          ],
+          [
+            2,
+            "Elm City Gifts",
+            "mugs and small goods",
+            3,
+            0
+          ],
+          [
+            3,
+            "QuickShip CT",
+            "local courier",
+            1,
+            0
+          ]
+        ],
+        "note": "The last column counts invoices that were open before this run's payment: 1 for Bulldog Print Co (invoice 501), 0 for the others.",
+        "db_value": [
+          [
+            1,
+            "Bulldog Print Co",
+            "apparel reprint",
+            5,
+            1
+          ],
+          [
+            2,
+            "Elm City Gifts",
+            "mugs and small goods",
+            3,
+            0
+          ],
+          [
+            3,
+            "QuickShip CT",
+            "local courier",
+            1,
+            0
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 9,
+      "phase": "read, seed state",
+      "prompt": "Which invoices are open and how late are they?",
+      "tool": "list_invoices",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 501,
+            "vendor_id": 1,
+            "amount": 840,
+            "due_date": "2026-08-28",
+            "status": "open",
+            "description": "Rush reprint CC-TEE-WHITE S",
+            "vendor_name": "Bulldog Print Co",
+            "days_overdue": 3
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT i.id, i.vendor_id, i.amount, i.due_date, i.description, v.name, CAST(julianday(d.date_today) - julianday(i.due_date) AS INTEGER) FROM invoices i JOIN vendors v ON v.id = i.vendor_id, desk d WHERE i.id = 501",
+        "expect": [
+          [
+            501,
+            1,
+            840,
+            "2026-08-28",
+            "Rush reprint CC-TEE-WHITE S",
+            "Bulldog Print Co",
+            3
+          ]
+        ],
+        "db_value": [
+          [
+            501,
+            1,
+            840.0,
+            "2026-08-28",
+            "Rush reprint CC-TEE-WHITE S",
+            "Bulldog Print Co",
+            3
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 10,
+      "phase": "read, seed state",
+      "prompt": "When is the rent due and how much is it?",
+      "tool": "get_lease",
+      "arguments": {
+        "lease_id": 1
+      },
+      "output": {
+        "id": 1,
+        "space_name": "Chapel Street shop",
+        "landlord": "Elm City Properties",
+        "monthly_rent": 2400,
+        "next_due": "2026-09-02",
+        "notes": null,
+        "days_until_due": 2
+      },
+      "db_check": {
+        "sql": "SELECT l.space_name, l.landlord, l.monthly_rent, l.next_due, CAST(julianday(l.next_due) - julianday(d.date_today) AS INTEGER) FROM leases l, desk d WHERE l.id = 1",
+        "expect": [
+          [
+            "Chapel Street shop",
+            "Elm City Properties",
+            2400,
+            "2026-09-02",
+            2
+          ]
+        ],
+        "db_value": [
+          [
+            "Chapel Street shop",
+            "Elm City Properties",
+            2400.0,
+            "2026-09-02",
+            2
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 11,
+      "phase": "read, seed state",
+      "prompt": "How much cash do we have?",
+      "tool": "get_cash",
+      "arguments": {},
+      "output": {
+        "accounts": [
+          {
+            "name": "checking",
+            "balance": 3400,
+            "date": "2026-08-31"
+          }
+        ],
+        "total": 3400
+      },
+      "db_check": {
+        "sql": "SELECT balance + (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE account = 'checking') FROM cash_accounts WHERE name = 'checking'",
+        "expect": 3400,
+        "note": "Balance before this run's payment: current balance plus everything paid out since.",
+        "db_value": 3400.0,
+        "match": true
+      }
+    },
+    {
+      "step": 12,
+      "phase": "read, seed state",
+      "prompt": "Has anything been paid yet?",
+      "tool": "list_payments",
+      "arguments": {},
+      "output": {
+        "result": []
+      },
+      "db_check": {
+        "sql": "SELECT COUNT(*) FROM payments WHERE id < 1",
+        "expect": 0,
+        "note": "This run's payment has id 1, so the table was empty before it.",
+        "db_value": 0,
+        "match": true
+      }
+    },
+    {
+      "step": 13,
+      "phase": "read, seed state",
+      "prompt": "Are there any purchase orders?",
+      "tool": "list_purchase_orders",
+      "arguments": {},
+      "output": {
+        "result": []
+      },
+      "db_check": {
+        "sql": "SELECT COUNT(*) FROM purchase_orders WHERE id < 1",
+        "expect": 0,
+        "db_value": 0,
+        "match": true
+      }
+    },
+    {
+      "step": 14,
+      "phase": "read, seed state",
+      "prompt": "Is anything waiting for my approval?",
+      "tool": "list_approvals",
+      "arguments": {},
+      "output": {
+        "result": []
+      },
+      "db_check": {
+        "sql": "SELECT COUNT(*) FROM approvals WHERE id < 1",
+        "expect": 0,
+        "db_value": 0,
+        "match": true
+      }
+    },
+    {
+      "step": 15,
+      "phase": "read, seed state",
+      "prompt": "Any customer drafts on the board?",
+      "tool": "list_drafts",
+      "arguments": {},
+      "output": {
+        "result": []
+      },
+      "db_check": {
+        "sql": "SELECT COUNT(*) FROM drafts WHERE id < 1",
+        "expect": 0,
+        "db_value": 0,
+        "match": true
+      }
+    },
+    {
+      "step": 16,
+      "phase": "write",
+      "prompt": "Inventory: the size S tee shelf is empty and ticket 101 needs one. Open a restock ticket for 12.",
+      "tool": "open_ticket",
+      "arguments": {
+        "type": "restock",
+        "requester": "inventory",
+        "subject": "Restock CC-TEE-WHITE size S",
+        "notes": "Shelf is at 0 and ticket 101 needs one. Order 12 from Bulldog Print Co once invoice 501 is paid.",
+        "sku": "CC-TEE-WHITE",
+        "size": "S",
+        "qty": 12,
+        "agent": "inventory"
+      },
+      "output": {
+        "id": 104,
+        "type": "restock",
+        "requester": "inventory",
+        "subject": "Restock CC-TEE-WHITE size S",
+        "sku": "CC-TEE-WHITE",
+        "size": "S",
+        "qty": 12,
+        "lease_id": null,
+        "invoice_id": null,
+        "status": "open",
+        "notes": "Shelf is at 0 and ticket 101 needs one. Order 12 from Bulldog Print Co once invoice 501 is paid.",
+        "created_at": "2026-08-31T14:59:26-04:00",
+        "assigned_to": null,
+        "priority": null,
+        "resolution": null,
+        "updated_at": "2026-11-03T14:59:26-05:00",
+        "shop_today": "2026-08-31",
+        "links": {
+          "invoice": null,
+          "lease": null,
+          "stock": [
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "S",
+              "qty": 0,
+              "location": "Aisle B",
+              "requested_size": true
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "M",
+              "qty": 5,
+              "location": "Aisle B",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "L",
+              "qty": 3,
+              "location": "Aisle B",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "XL",
+              "qty": 2,
+              "location": "Aisle B",
+              "requested_size": false
+            }
+          ],
+          "pricing": {
+            "sku": "CC-TEE-WHITE",
+            "unit_cost": 8,
+            "list_price": 28
+          }
+        }
+      },
+      "db_check": {
+        "sql": "SELECT id, type, requester, subject, sku, size, qty, notes, created_at FROM tickets WHERE id = 104",
+        "expect": [
+          [
+            104,
+            "restock",
+            "inventory",
+            "Restock CC-TEE-WHITE size S",
+            "CC-TEE-WHITE",
+            "S",
+            12,
+            "Shelf is at 0 and ticket 101 needs one. Order 12 from Bulldog Print Co once invoice 501 is paid.",
+            "2026-08-31T14:59:26-04:00"
+          ]
+        ],
+        "note": "created_at carries the shop's date with the wall-clock time, as designed.",
+        "db_value": [
+          [
+            104,
+            "restock",
+            "inventory",
+            "Restock CC-TEE-WHITE size S",
+            "CC-TEE-WHITE",
+            "S",
+            12,
+            "Shelf is at 0 and ticket 101 needs one. Order 12 from Bulldog Print Co once invoice 501 is paid.",
+            "2026-08-31T14:59:26-04:00"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 17,
+      "phase": "write",
+      "prompt": "Boss: give the tee order (101) to Inventory.",
+      "tool": "assign_ticket",
+      "arguments": {
+        "ticket_id": 101,
+        "assigned_to": "inventory",
+        "agent": "boss"
+      },
+      "output": {
+        "id": 101,
+        "type": "customer_order",
+        "requester": "Tauhid Zaman",
+        "subject": "Bulldog tee",
+        "sku": "CC-TEE-WHITE",
+        "size": "S",
+        "qty": 1,
+        "lease_id": null,
+        "invoice_id": 501,
+        "status": "in_progress",
+        "notes": "Needs a tee in size S.",
+        "created_at": "2026-08-31T09:15:00-04:00",
+        "assigned_to": "inventory",
+        "priority": null,
+        "resolution": null,
+        "updated_at": "2026-11-03T14:59:26-05:00",
+        "shop_today": "2026-08-31",
+        "links": {
+          "invoice": {
+            "id": 501,
+            "vendor_id": 1,
+            "amount": 840,
+            "due_date": "2026-08-28",
+            "status": "open",
+            "description": "Rush reprint CC-TEE-WHITE S",
+            "vendor_name": "Bulldog Print Co",
+            "vendor_specialty": "apparel reprint",
+            "vendor_lead_days": 5,
+            "days_overdue": 3
+          },
+          "lease": null,
+          "stock": [
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "S",
+              "qty": 0,
+              "location": "Aisle B",
+              "requested_size": true
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "M",
+              "qty": 5,
+              "location": "Aisle B",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "L",
+              "qty": 3,
+              "location": "Aisle B",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "XL",
+              "qty": 2,
+              "location": "Aisle B",
+              "requested_size": false
+            }
+          ],
+          "pricing": {
+            "sku": "CC-TEE-WHITE",
+            "unit_cost": 8,
+            "list_price": 28
+          }
+        }
+      },
+      "db_check": {
+        "sql": "SELECT t.assigned_to, e.agent, e.kind, e.message FROM tickets t JOIN ticket_events e ON e.ticket_id = t.id AND e.kind = 'assigned' WHERE t.id = 101",
+        "expect": [
+          [
+            "inventory",
+            "boss",
+            "assigned",
+            "Ticket 101 assigned to inventory"
+          ]
+        ],
+        "note": "Status was in_progress at this point; step 21 later moved it to waiting_approval.",
+        "db_value": [
+          [
+            "inventory",
+            "boss",
+            "assigned",
+            "Ticket 101 assigned to inventory"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 18,
+      "phase": "write",
+      "prompt": "Boss: rent is due in two days, make ticket 102 priority 1.",
+      "tool": "set_ticket_priority",
+      "arguments": {
+        "ticket_id": 102,
+        "priority": 1,
+        "agent": "boss"
+      },
+      "output": {
+        "id": 102,
+        "type": "rent_notice",
+        "requester": "Elm City Properties",
+        "subject": "Rent due",
+        "sku": null,
+        "size": null,
+        "qty": null,
+        "lease_id": 1,
+        "invoice_id": null,
+        "status": "open",
+        "notes": "Email: shop rent due in 2 days.",
+        "created_at": "2026-08-31T11:05:00-04:00",
+        "assigned_to": null,
+        "priority": 1,
+        "resolution": null,
+        "updated_at": "2026-11-03T14:59:26-05:00",
+        "shop_today": "2026-08-31",
+        "links": {
+          "invoice": null,
+          "lease": {
+            "id": 1,
+            "space_name": "Chapel Street shop",
+            "landlord": "Elm City Properties",
+            "monthly_rent": 2400,
+            "next_due": "2026-09-02",
+            "notes": null,
+            "days_until_due": 2
+          },
+          "stock": [],
+          "pricing": null
+        }
+      },
+      "db_check": {
+        "sql": "SELECT t.priority, t.status, e.kind, e.data FROM tickets t JOIN ticket_events e ON e.ticket_id = t.id AND e.kind = 'priority' WHERE t.id = 102",
+        "expect": [
+          [
+            1,
+            "open",
+            "priority",
+            "{\"priority\": 1}"
+          ]
+        ],
+        "db_value": [
+          [
+            1,
+            "open",
+            "priority",
+            "{\"priority\": 1}"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 19,
+      "phase": "write",
+      "prompt": "Boss: start work on the hoodie discount request (103).",
+      "tool": "set_ticket_status",
+      "arguments": {
+        "ticket_id": 103,
+        "status": "in_progress",
+        "agent": "boss"
+      },
+      "output": {
+        "id": 103,
+        "type": "price_override",
+        "requester": "Yale AI Club",
+        "subject": "Bulk hoodie discount",
+        "sku": "CC-HOOD-NAVY",
+        "size": "M",
+        "qty": 20,
+        "lease_id": null,
+        "invoice_id": null,
+        "status": "in_progress",
+        "notes": "Student org wants 20 hoodies, size M, asking for a bulk discount.",
+        "created_at": "2026-08-31T16:55:00-04:00",
+        "assigned_to": null,
+        "priority": null,
+        "resolution": null,
+        "updated_at": "2026-11-03T14:59:26-05:00",
+        "shop_today": "2026-08-31",
+        "links": {
+          "invoice": null,
+          "lease": null,
+          "stock": [
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "S",
+              "qty": 4,
+              "location": "Aisle A",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "M",
+              "qty": 8,
+              "location": "Aisle A",
+              "requested_size": true
+            },
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "L",
+              "qty": 14,
+              "location": "Aisle A",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-HOOD-NAVY",
+              "name": "Basic Hoodie Big Yale",
+              "size": "XL",
+              "qty": 6,
+              "location": "Aisle A",
+              "requested_size": false
+            }
+          ],
+          "pricing": {
+            "sku": "CC-HOOD-NAVY",
+            "unit_cost": 22,
+            "list_price": 58
+          }
+        }
+      },
+      "db_check": {
+        "sql": "SELECT t.status, e.message FROM tickets t JOIN ticket_events e ON e.ticket_id = t.id AND e.kind = 'status' WHERE t.id = 103",
+        "expect": [
+          [
+            "in_progress",
+            "Ticket 103 status open -> in_progress"
+          ]
+        ],
+        "db_value": [
+          [
+            "in_progress",
+            "Ticket 103 status open -> in_progress"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 20,
+      "phase": "write",
+      "prompt": "Inventory: note the hoodie stock count on ticket 103.",
+      "tool": "add_ticket_note",
+      "arguments": {
+        "ticket_id": 103,
+        "note": "Stock check: CC-HOOD-NAVY M has 8 on the shelf; 20 requested, so 12 short.",
+        "agent": "inventory"
+      },
+      "output": {
+        "id": 5,
+        "ticket_id": 103,
+        "agent": "inventory",
+        "kind": "note",
+        "message": "Stock check: CC-HOOD-NAVY M has 8 on the shelf; 20 requested, so 12 short.",
+        "data": null,
+        "created_at": "2026-11-03T14:59:26-05:00"
+      },
+      "db_check": {
+        "sql": "SELECT id, ticket_id, agent, kind, message, data FROM ticket_events WHERE id = 5",
+        "expect": [
+          [
+            5,
+            103,
+            "inventory",
+            "note",
+            "Stock check: CC-HOOD-NAVY M has 8 on the shelf; 20 requested, so 12 short.",
+            null
+          ]
+        ],
+        "db_value": [
+          [
+            5,
+            103,
+            "inventory",
+            "note",
+            "Stock check: CC-HOOD-NAVY M has 8 on the shelf; 20 requested, so 12 short.",
+            null
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 21,
+      "phase": "write",
+      "prompt": "Accounting: ask the manager to approve paying invoice 501 so the printer will ship again.",
+      "tool": "request_approval",
+      "arguments": {
+        "kind": "invoice",
+        "ref_id": 501,
+        "ticket_id": 101,
+        "rationale": "Invoice 501 is 3 days overdue and Bulldog Print Co will not ship the tee reprint until it is paid. Checking holds $3,400.",
+        "agent": "accounting"
+      },
+      "output": {
+        "id": 1,
+        "ticket_id": 101,
+        "kind": "invoice",
+        "ref_id": 501,
+        "amount": 840,
+        "account": "checking",
+        "rationale": "Invoice 501 is 3 days overdue and Bulldog Print Co will not ship the tee reprint until it is paid. Checking holds $3,400.",
+        "requested_by": "accounting",
+        "status": "pending",
+        "decided_by": null,
+        "decided_at": null,
+        "decision_note": null,
+        "created_at": "2026-11-03T14:59:31-05:00"
+      },
+      "db_check": {
+        "sql": "SELECT a.id, a.ticket_id, a.kind, a.ref_id, a.amount, a.account, a.requested_by, t.status FROM approvals a JOIN tickets t ON t.id = a.ticket_id WHERE a.id = 1",
+        "expect": [
+          [
+            1,
+            101,
+            "invoice",
+            501,
+            840,
+            "checking",
+            "accounting",
+            "waiting_approval"
+          ]
+        ],
+        "note": "The amount equals invoices.amount for 501; the ticket moved to waiting_approval.",
+        "db_value": [
+          [
+            1,
+            101,
+            "invoice",
+            501,
+            840.0,
+            "checking",
+            "accounting",
+            "waiting_approval"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 22,
+      "phase": "write",
+      "prompt": "Store Manager (human): approve request 1.",
+      "tool": "decide_approval",
+      "arguments": {
+        "approval_id": 1,
+        "decision": "approved",
+        "decided_by": "Store Manager",
+        "note": "Pay it; unblocks the tee reprint."
+      },
+      "output": {
+        "id": 1,
+        "ticket_id": 101,
+        "kind": "invoice",
+        "ref_id": 501,
+        "amount": 840,
+        "account": "checking",
+        "rationale": "Invoice 501 is 3 days overdue and Bulldog Print Co will not ship the tee reprint until it is paid. Checking holds $3,400.",
+        "requested_by": "accounting",
+        "status": "approved",
+        "decided_by": "Store Manager",
+        "decided_at": "2026-11-03T14:59:35-05:00",
+        "decision_note": "Pay it; unblocks the tee reprint.",
+        "created_at": "2026-11-03T14:59:31-05:00"
+      },
+      "db_check": {
+        "sql": "SELECT decided_by, decision_note, decided_at FROM approvals WHERE id = 1",
+        "expect": [
+          [
+            "Store Manager",
+            "Pay it; unblocks the tee reprint.",
+            "2026-11-03T14:59:35-05:00"
+          ]
+        ],
+        "note": "Status read 'approved' here; step 23 moved it to 'executed'.",
+        "db_value": [
+          [
+            "Store Manager",
+            "Pay it; unblocks the tee reprint.",
+            "2026-11-03T14:59:35-05:00"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 23,
+      "phase": "write",
+      "prompt": "Pay approval 1 on behalf of the Store Manager.",
+      "tool": "pay",
+      "arguments": {
+        "approval_id": 1,
+        "approved_by": "Store Manager"
+      },
+      "output": {
+        "id": 1,
+        "kind": "invoice",
+        "ref_id": 501,
+        "amount": 840,
+        "account": "checking",
+        "paid_at": "2026-08-31",
+        "approved_by": "Store Manager",
+        "payee": "Bulldog Print Co",
+        "balance_after": 2560,
+        "settled": "invoice 501 marked paid"
+      },
+      "db_check": {
+        "sql": "SELECT p.id, p.kind, p.ref_id, p.amount, p.account, p.paid_at, p.approved_by, c.balance, i.status, a.status FROM payments p, cash_accounts c, invoices i, approvals a WHERE p.id = 1 AND c.name = 'checking' AND i.id = 501 AND a.id = 1",
+        "expect": [
+          [
+            1,
+            "invoice",
+            501,
+            840,
+            "checking",
+            "2026-08-31",
+            "Store Manager",
+            2560,
+            "paid",
+            "executed"
+          ]
+        ],
+        "note": "One transaction: payment row, balance 3400 - 840, invoice paid, approval executed.",
+        "db_value": [
+          [
+            1,
+            "invoice",
+            501,
+            840.0,
+            "checking",
+            "2026-08-31",
+            "Store Manager",
+            2560.0,
+            "paid",
+            "executed"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 24,
+      "phase": "write",
+      "prompt": "Inventory: now that the printer is paid, draft the order for 12 size S tees on ticket 104.",
+      "tool": "create_purchase_order",
+      "arguments": {
+        "vendor_id": 1,
+        "sku": "CC-TEE-WHITE",
+        "size": "S",
+        "qty": 12,
+        "agent": "inventory",
+        "ticket_id": 104
+      },
+      "output": {
+        "id": 1,
+        "ticket_id": 104,
+        "vendor_id": 1,
+        "sku": "CC-TEE-WHITE",
+        "size": "S",
+        "qty": 12,
+        "unit_cost": 8,
+        "total": 96,
+        "status": "draft",
+        "expected_date": "2026-09-05",
+        "created_by": "inventory",
+        "created_at": "2026-11-03T14:59:48-05:00"
+      },
+      "db_check": {
+        "sql": "SELECT po.id, po.ticket_id, po.vendor_id, po.sku, po.size, po.qty, po.unit_cost, po.total, po.status, po.expected_date, po.created_by, p.unit_cost * po.qty, date(d.date_today, '+' || v.lead_days || ' days') FROM purchase_orders po JOIN pricing p ON p.sku = po.sku JOIN vendors v ON v.id = po.vendor_id, desk d WHERE po.id = 1",
+        "expect": [
+          [
+            1,
+            104,
+            1,
+            "CC-TEE-WHITE",
+            "S",
+            12,
+            8,
+            96,
+            "draft",
+            "2026-09-05",
+            "inventory",
+            96,
+            "2026-09-05"
+          ]
+        ],
+        "note": "The last two columns recompute total from pricing and expected_date from desk.date_today + vendors.lead_days.",
+        "db_value": [
+          [
+            1,
+            104,
+            1,
+            "CC-TEE-WHITE",
+            "S",
+            12,
+            8.0,
+            96.0,
+            "draft",
+            "2026-09-05",
+            "inventory",
+            96.0,
+            "2026-09-05"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 25,
+      "phase": "write",
+      "prompt": "Customer Service: write to Tauhid Zaman about the tee delay. Do not send it.",
+      "tool": "draft_customer_message",
+      "arguments": {
+        "ticket_id": 101,
+        "recipient": "Tauhid Zaman",
+        "subject": "Your Bulldog tee, size S",
+        "body": "Thanks for your order. Size S is out of stock today; a reprint is on its way from our printer and should land by September 5. We'll let you know the moment it arrives. If you'd rather not wait, M, L, and XL are on the shelf now.",
+        "agent": "customer_service"
+      },
+      "output": {
+        "id": 1,
+        "ticket_id": 101,
+        "recipient": "Tauhid Zaman",
+        "subject": "Your Bulldog tee, size S",
+        "body": "Thanks for your order. Size S is out of stock today; a reprint is on its way from our printer and should land by September 5. We'll let you know the moment it arrives. If you'd rather not wait, M, L, and XL are on the shelf now.",
+        "author": "customer_service",
+        "created_at": "2026-11-03T14:59:48-05:00"
+      },
+      "db_check": {
+        "sql": "SELECT id, ticket_id, recipient, subject, author FROM drafts WHERE id = 1",
+        "expect": [
+          [
+            1,
+            101,
+            "Tauhid Zaman",
+            "Your Bulldog tee, size S",
+            "customer_service"
+          ]
+        ],
+        "db_value": [
+          [
+            1,
+            101,
+            "Tauhid Zaman",
+            "Your Bulldog tee, size S",
+            "customer_service"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 26,
+      "phase": "write",
+      "prompt": "Boss: close the restock ticket 104 with what was done.",
+      "tool": "resolve_ticket",
+      "arguments": {
+        "ticket_id": 104,
+        "resolution": "Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05, pending approval of payment.",
+        "agent": "boss"
+      },
+      "output": {
+        "id": 104,
+        "type": "restock",
+        "requester": "inventory",
+        "subject": "Restock CC-TEE-WHITE size S",
+        "sku": "CC-TEE-WHITE",
+        "size": "S",
+        "qty": 12,
+        "lease_id": null,
+        "invoice_id": null,
+        "status": "resolved",
+        "notes": "Shelf is at 0 and ticket 101 needs one. Order 12 from Bulldog Print Co once invoice 501 is paid.",
+        "created_at": "2026-08-31T14:59:26-04:00",
+        "assigned_to": null,
+        "priority": null,
+        "resolution": "Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05, pending approval of payment.",
+        "updated_at": "2026-11-03T14:59:58-05:00",
+        "shop_today": "2026-08-31",
+        "links": {
+          "invoice": null,
+          "lease": null,
+          "stock": [
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "S",
+              "qty": 0,
+              "location": "Aisle B",
+              "requested_size": true
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "M",
+              "qty": 5,
+              "location": "Aisle B",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "L",
+              "qty": 3,
+              "location": "Aisle B",
+              "requested_size": false
+            },
+            {
+              "sku": "CC-TEE-WHITE",
+              "name": "Classic Bulldog Tee",
+              "size": "XL",
+              "qty": 2,
+              "location": "Aisle B",
+              "requested_size": false
+            }
+          ],
+          "pricing": {
+            "sku": "CC-TEE-WHITE",
+            "unit_cost": 8,
+            "list_price": 28
+          }
+        }
+      },
+      "db_check": {
+        "sql": "SELECT t.status, t.resolution, e.id, e.agent, e.kind FROM tickets t JOIN ticket_events e ON e.ticket_id = t.id AND e.kind = 'resolved' WHERE t.id = 104",
+        "expect": [
+          [
+            "resolved",
+            "Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05, pending approval of payment.",
+            11,
+            "boss",
+            "resolved"
+          ]
+        ],
+        "db_value": [
+          [
+            "resolved",
+            "Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05, pending approval of payment.",
+            11,
+            "boss",
+            "resolved"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 27,
+      "phase": "read, after the writes",
+      "prompt": "How much cash is left after paying the printer?",
+      "tool": "get_cash",
+      "arguments": {},
+      "output": {
+        "accounts": [
+          {
+            "name": "checking",
+            "balance": 2560,
+            "date": "2026-08-31"
+          }
+        ],
+        "total": 2560
+      },
+      "db_check": {
+        "sql": "SELECT name, balance, date FROM cash_accounts",
+        "expect": [
+          [
+            "checking",
+            2560,
+            "2026-08-31"
+          ]
+        ],
+        "db_value": [
+          [
+            "checking",
+            2560.0,
+            "2026-08-31"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 28,
+      "phase": "read, after the writes",
+      "prompt": "List the payments made.",
+      "tool": "list_payments",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 1,
+            "kind": "invoice",
+            "ref_id": 501,
+            "amount": 840,
+            "account": "checking",
+            "paid_at": "2026-08-31",
+            "approved_by": "Store Manager"
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT id, kind, ref_id, amount, account, paid_at, approved_by FROM payments ORDER BY id",
+        "expect": [
+          [
+            1,
+            "invoice",
+            501,
+            840,
+            "checking",
+            "2026-08-31",
+            "Store Manager"
+          ]
+        ],
+        "db_value": [
+          [
+            1,
+            "invoice",
+            501,
+            840.0,
+            "checking",
+            "2026-08-31",
+            "Store Manager"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 29,
+      "phase": "read, after the writes",
+      "prompt": "Is invoice 501 settled?",
+      "tool": "list_invoices",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 501,
+            "vendor_id": 1,
+            "amount": 840,
+            "due_date": "2026-08-28",
+            "status": "paid",
+            "description": "Rush reprint CC-TEE-WHITE S",
+            "vendor_name": "Bulldog Print Co",
+            "days_overdue": 0
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT id, status FROM invoices ORDER BY id",
+        "expect": [
+          [
+            501,
+            "paid"
+          ]
+        ],
+        "db_value": [
+          [
+            501,
+            "paid"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 30,
+      "phase": "read, after the writes",
+      "prompt": "Can Bulldog Print Co ship now?",
+      "tool": "list_vendors",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 1,
+            "name": "Bulldog Print Co",
+            "specialty": "apparel reprint",
+            "lead_days": 5,
+            "open_invoice_ids": [],
+            "open_invoice_total": 0,
+            "can_ship": true
+          },
+          {
+            "id": 2,
+            "name": "Elm City Gifts",
+            "specialty": "mugs and small goods",
+            "lead_days": 3,
+            "open_invoice_ids": [],
+            "open_invoice_total": 0,
+            "can_ship": true
+          },
+          {
+            "id": 3,
+            "name": "QuickShip CT",
+            "specialty": "local courier",
+            "lead_days": 1,
+            "open_invoice_ids": [],
+            "open_invoice_total": 0,
+            "can_ship": true
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT COUNT(*) FROM invoices WHERE status = 'open'",
+        "expect": 0,
+        "note": "No open invoice for any vendor, so every can_ship is true.",
+        "db_value": 0,
+        "match": true
+      }
+    },
+    {
+      "step": 31,
+      "phase": "read, after the writes",
+      "prompt": "Show the purchase orders.",
+      "tool": "list_purchase_orders",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 1,
+            "ticket_id": 104,
+            "vendor_id": 1,
+            "sku": "CC-TEE-WHITE",
+            "size": "S",
+            "qty": 12,
+            "unit_cost": 8,
+            "total": 96,
+            "status": "draft",
+            "expected_date": "2026-09-05",
+            "created_by": "inventory",
+            "created_at": "2026-11-03T14:59:48-05:00",
+            "vendor_name": "Bulldog Print Co",
+            "vendor_lead_days": 5
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT po.id, po.ticket_id, po.vendor_id, po.sku, po.size, po.qty, po.unit_cost, po.total, po.status, po.expected_date, po.created_by, v.name, v.lead_days FROM purchase_orders po JOIN vendors v ON v.id = po.vendor_id ORDER BY po.id",
+        "expect": [
+          [
+            1,
+            104,
+            1,
+            "CC-TEE-WHITE",
+            "S",
+            12,
+            8,
+            96,
+            "draft",
+            "2026-09-05",
+            "inventory",
+            "Bulldog Print Co",
+            5
+          ]
+        ],
+        "db_value": [
+          [
+            1,
+            104,
+            1,
+            "CC-TEE-WHITE",
+            "S",
+            12,
+            8.0,
+            96.0,
+            "draft",
+            "2026-09-05",
+            "inventory",
+            "Bulldog Print Co",
+            5
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 32,
+      "phase": "read, after the writes",
+      "prompt": "Show the approval queue with what happened to each request.",
+      "tool": "list_approvals",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 1,
+            "ticket_id": 101,
+            "kind": "invoice",
+            "ref_id": 501,
+            "amount": 840,
+            "account": "checking",
+            "rationale": "Invoice 501 is 3 days overdue and Bulldog Print Co will not ship the tee reprint until it is paid. Checking holds $3,400.",
+            "requested_by": "accounting",
+            "status": "executed",
+            "decided_by": "Store Manager",
+            "decided_at": "2026-11-03T14:59:35-05:00",
+            "decision_note": "Pay it; unblocks the tee reprint.",
+            "created_at": "2026-11-03T14:59:31-05:00"
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT id, ticket_id, kind, ref_id, amount, account, requested_by, status, decided_by, decision_note FROM approvals ORDER BY id",
+        "expect": [
+          [
+            1,
+            101,
+            "invoice",
+            501,
+            840,
+            "checking",
+            "accounting",
+            "executed",
+            "Store Manager",
+            "Pay it; unblocks the tee reprint."
+          ]
+        ],
+        "db_value": [
+          [
+            1,
+            101,
+            "invoice",
+            501,
+            840.0,
+            "checking",
+            "accounting",
+            "executed",
+            "Store Manager",
+            "Pay it; unblocks the tee reprint."
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 33,
+      "phase": "read, after the writes",
+      "prompt": "Show the customer drafts waiting on the board.",
+      "tool": "list_drafts",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 1,
+            "ticket_id": 101,
+            "recipient": "Tauhid Zaman",
+            "subject": "Your Bulldog tee, size S",
+            "body": "Thanks for your order. Size S is out of stock today; a reprint is on its way from our printer and should land by September 5. We'll let you know the moment it arrives. If you'd rather not wait, M, L, and XL are on the shelf now.",
+            "author": "customer_service",
+            "created_at": "2026-11-03T14:59:48-05:00"
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT id, ticket_id, recipient, subject, body, author FROM drafts ORDER BY id",
+        "expect": [
+          [
+            1,
+            101,
+            "Tauhid Zaman",
+            "Your Bulldog tee, size S",
+            "Thanks for your order. Size S is out of stock today; a reprint is on its way from our printer and should land by September 5. We'll let you know the moment it arrives. If you'd rather not wait, M, L, and XL are on the shelf now.",
+            "customer_service"
+          ]
+        ],
+        "db_value": [
+          [
+            1,
+            101,
+            "Tauhid Zaman",
+            "Your Bulldog tee, size S",
+            "Thanks for your order. Size S is out of stock today; a reprint is on its way from our printer and should land by September 5. We'll let you know the moment it arrives. If you'd rather not wait, M, L, and XL are on the shelf now.",
+            "customer_service"
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 34,
+      "phase": "read, after the writes",
+      "prompt": "Show the board again, most urgent first.",
+      "tool": "list_tickets",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 102,
+            "type": "rent_notice",
+            "requester": "Elm City Properties",
+            "subject": "Rent due",
+            "sku": null,
+            "size": null,
+            "qty": null,
+            "lease_id": 1,
+            "invoice_id": null,
+            "status": "open",
+            "notes": "Email: shop rent due in 2 days.",
+            "created_at": "2026-08-31T11:05:00-04:00",
+            "assigned_to": null,
+            "priority": 1,
+            "resolution": null,
+            "updated_at": "2026-11-03T14:59:26-05:00"
+          },
+          {
+            "id": 101,
+            "type": "customer_order",
+            "requester": "Tauhid Zaman",
+            "subject": "Bulldog tee",
+            "sku": "CC-TEE-WHITE",
+            "size": "S",
+            "qty": 1,
+            "lease_id": null,
+            "invoice_id": 501,
+            "status": "waiting_approval",
+            "notes": "Needs a tee in size S.",
+            "created_at": "2026-08-31T09:15:00-04:00",
+            "assigned_to": "inventory",
+            "priority": null,
+            "resolution": null,
+            "updated_at": "2026-11-03T14:59:31-05:00"
+          },
+          {
+            "id": 103,
+            "type": "price_override",
+            "requester": "Yale AI Club",
+            "subject": "Bulk hoodie discount",
+            "sku": "CC-HOOD-NAVY",
+            "size": "M",
+            "qty": 20,
+            "lease_id": null,
+            "invoice_id": null,
+            "status": "in_progress",
+            "notes": "Student org wants 20 hoodies, size M, asking for a bulk discount.",
+            "created_at": "2026-08-31T16:55:00-04:00",
+            "assigned_to": null,
+            "priority": null,
+            "resolution": null,
+            "updated_at": "2026-11-03T14:59:26-05:00"
+          },
+          {
+            "id": 104,
+            "type": "restock",
+            "requester": "inventory",
+            "subject": "Restock CC-TEE-WHITE size S",
+            "sku": "CC-TEE-WHITE",
+            "size": "S",
+            "qty": 12,
+            "lease_id": null,
+            "invoice_id": null,
+            "status": "resolved",
+            "notes": "Shelf is at 0 and ticket 101 needs one. Order 12 from Bulldog Print Co once invoice 501 is paid.",
+            "created_at": "2026-08-31T14:59:26-04:00",
+            "assigned_to": null,
+            "priority": null,
+            "resolution": "Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05, pending approval of payment.",
+            "updated_at": "2026-11-03T14:59:58-05:00"
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT id, status, assigned_to, priority FROM tickets ORDER BY CASE WHEN priority IS NULL THEN 1 ELSE 0 END, priority, id",
+        "expect": [
+          [
+            102,
+            "open",
+            null,
+            1
+          ],
+          [
+            101,
+            "waiting_approval",
+            "inventory",
+            null
+          ],
+          [
+            103,
+            "in_progress",
+            null,
+            null
+          ],
+          [
+            104,
+            "resolved",
+            null,
+            null
+          ]
+        ],
+        "note": "Same order the tool uses: prioritised tickets first, then by id.",
+        "db_value": [
+          [
+            102,
+            "open",
+            null,
+            1
+          ],
+          [
+            101,
+            "waiting_approval",
+            "inventory",
+            null
+          ],
+          [
+            103,
+            "in_progress",
+            null,
+            null
+          ],
+          [
+            104,
+            "resolved",
+            null,
+            null
+          ]
+        ],
+        "match": true
+      }
+    },
+    {
+      "step": 35,
+      "phase": "read, after the writes",
+      "prompt": "Show the full timeline of who did what.",
+      "tool": "list_ticket_events",
+      "arguments": {},
+      "output": {
+        "result": [
+          {
+            "id": 1,
+            "ticket_id": 104,
+            "agent": "inventory",
+            "kind": "opened",
+            "message": "Ticket 104 opened (restock): Restock CC-TEE-WHITE size S",
+            "data": {
+              "type": "restock",
+              "requester": "inventory"
+            },
+            "created_at": "2026-11-03T14:59:26-05:00"
+          },
+          {
+            "id": 2,
+            "ticket_id": 101,
+            "agent": "boss",
+            "kind": "assigned",
+            "message": "Ticket 101 assigned to inventory",
+            "data": {
+              "assigned_to": "inventory"
+            },
+            "created_at": "2026-11-03T14:59:26-05:00"
+          },
+          {
+            "id": 3,
+            "ticket_id": 102,
+            "agent": "boss",
+            "kind": "priority",
+            "message": "Ticket 102 priority set to 1",
+            "data": {
+              "priority": 1
+            },
+            "created_at": "2026-11-03T14:59:26-05:00"
+          },
+          {
+            "id": 4,
+            "ticket_id": 103,
+            "agent": "boss",
+            "kind": "status",
+            "message": "Ticket 103 status open -> in_progress",
+            "data": {
+              "from": "open",
+              "to": "in_progress"
+            },
+            "created_at": "2026-11-03T14:59:26-05:00"
+          },
+          {
+            "id": 5,
+            "ticket_id": 103,
+            "agent": "inventory",
+            "kind": "note",
+            "message": "Stock check: CC-HOOD-NAVY M has 8 on the shelf; 20 requested, so 12 short.",
+            "data": null,
+            "created_at": "2026-11-03T14:59:26-05:00"
+          },
+          {
+            "id": 6,
+            "ticket_id": 101,
+            "agent": "accounting",
+            "kind": "approval_requested",
+            "message": "Approval 1 requested: invoice 501 $840.00 to Bulldog Print Co. Invoice 501 is 3 days overdue and Bulldog Print Co will not ship the tee reprint until it is paid. Checking holds $3,400.",
+            "data": {
+              "approval_id": 1,
+              "kind": "invoice",
+              "ref_id": 501,
+              "amount": 840
+            },
+            "created_at": "2026-11-03T14:59:31-05:00"
+          },
+          {
+            "id": 7,
+            "ticket_id": 101,
+            "agent": "human",
+            "kind": "approved",
+            "message": "Approval 1 approved by Store Manager: Pay it; unblocks the tee reprint.",
+            "data": {
+              "approval_id": 1,
+              "decided_by": "Store Manager"
+            },
+            "created_at": "2026-11-03T14:59:35-05:00"
+          },
+          {
+            "id": 8,
+            "ticket_id": 101,
+            "agent": "human",
+            "kind": "paid",
+            "message": "Paid $840.00 to Bulldog Print Co from checking (invoice 501), approved by Store Manager; invoice 501 marked paid; balance now $2560.00",
+            "data": {
+              "payment_id": 1,
+              "approval_id": 1,
+              "kind": "invoice",
+              "ref_id": 501,
+              "amount": 840,
+              "balance": 2560
+            },
+            "created_at": "2026-11-03T14:59:40-05:00"
+          },
+          {
+            "id": 9,
+            "ticket_id": 104,
+            "agent": "inventory",
+            "kind": "purchase_order",
+            "message": "Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05",
+            "data": {
+              "purchase_order_id": 1,
+              "vendor_id": 1,
+              "total": 96
+            },
+            "created_at": "2026-11-03T14:59:48-05:00"
+          },
+          {
+            "id": 10,
+            "ticket_id": 101,
+            "agent": "customer_service",
+            "kind": "draft",
+            "message": "Draft 1 to Tauhid Zaman: Your Bulldog tee, size S",
+            "data": {
+              "draft_id": 1,
+              "recipient": "Tauhid Zaman"
+            },
+            "created_at": "2026-11-03T14:59:48-05:00"
+          },
+          {
+            "id": 11,
+            "ticket_id": 104,
+            "agent": "boss",
+            "kind": "resolved",
+            "message": "Ticket 104 resolved: Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05, pending approval of payment.",
+            "data": {
+              "resolution": "Purchase order 1 drafted: 12 x CC-TEE-WHITE S from Bulldog Print Co for $96.00, expected 2026-09-05, pending approval of payment."
+            },
+            "created_at": "2026-11-03T14:59:58-05:00"
+          }
+        ]
+      },
+      "db_check": {
+        "sql": "SELECT id, ticket_id, agent, kind FROM ticket_events ORDER BY id",
+        "expect": [
+          [
+            1,
+            104,
+            "inventory",
+            "opened"
+          ],
+          [
+            2,
+            101,
+            "boss",
+            "assigned"
+          ],
+          [
+            3,
+            102,
+            "boss",
+            "priority"
+          ],
+          [
+            4,
+            103,
+            "boss",
+            "status"
+          ],
+          [
+            5,
+            103,
+            "inventory",
+            "note"
+          ],
+          [
+            6,
+            101,
+            "accounting",
+            "approval_requested"
+          ],
+          [
+            7,
+            101,
+            "human",
+            "approved"
+          ],
+          [
+            8,
+            101,
+            "human",
+            "paid"
+          ],
+          [
+            9,
+            104,
+            "inventory",
+            "purchase_order"
+          ],
+          [
+            10,
+            101,
+            "customer_service",
+            "draft"
+          ],
+          [
+            11,
+            104,
+            "boss",
+            "resolved"
+          ]
+        ],
+        "db_value": [
+          [
+            1,
+            104,
+            "inventory",
+            "opened"
+          ],
+          [
+            2,
+            101,
+            "boss",
+            "assigned"
+          ],
+          [
+            3,
+            102,
+            "boss",
+            "priority"
+          ],
+          [
+            4,
+            103,
+            "boss",
+            "status"
+          ],
+          [
+            5,
+            103,
+            "inventory",
+            "note"
+          ],
+          [
+            6,
+            101,
+            "accounting",
+            "approval_requested"
+          ],
+          [
+            7,
+            101,
+            "human",
+            "approved"
+          ],
+          [
+            8,
+            101,
+            "human",
+            "paid"
+          ],
+          [
+            9,
+            104,
+            "inventory",
+            "purchase_order"
+          ],
+          [
+            10,
+            101,
+            "customer_service",
+            "draft"
+          ],
+          [
+            11,
+            104,
+            "boss",
+            "resolved"
+          ]
+        ],
+        "match": true
+      }
+    }
+  ]
+}

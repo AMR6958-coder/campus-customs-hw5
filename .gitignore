@@ -1,0 +1,28 @@
+# Secrets: only the placeholder templates are committed
+.env
+backend/.env
+!.env.example
+!backend/.env.example
+
+# Instructor data and the working copy stay out of the repository
+data/*.db
+data.zip
+*.zip
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Claude desktop app: only the launch config is tracked
+.claude/*
+!.claude/launch.json
+
+# Editors / OS
+.DS_Store
+Thumbs.db

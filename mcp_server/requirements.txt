@@ -1,0 +1,4 @@
+# Pinned to the versions the ticket-tool tests were run with on 2026-11-03 (Python 3.14).
+# fastmcp is a meta-package: it installs fastmcp-slim[client,server] and the mcp SDK (2.3.0).
+fastmcp==4.1.6
+pytest==9.2.0

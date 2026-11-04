@@ -1,0 +1,11 @@
+# Back end: the agent team. Installed into the same .venv as mcp_server/requirements.txt.
+pydantic-ai-slim[openai]==2.55.0
+python-dotenv==1.2.4
+# The MCP client SDK (the same version fastmcp 4.1.6 installs).
+mcp==2.3.0
+# The API (backend/main.py). uvicorn is also what fastmcp installs for the MCP server.
+fastapi==0.162.0
+uvicorn==0.54.0
+pytest==9.2.0
+# FastAPI's TestClient needs httpx (the MCP SDK uses httpx2, a different package).
+httpx==0.28.1
